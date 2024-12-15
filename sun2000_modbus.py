@@ -12,6 +12,9 @@
 # ./pip3 install pymodbus
 # ./pip3 install pyserial
 #
+# Copyright (C) Peter Ivanov <ivanovp@gmail.com>, 2024
+# License: GPLv3
+#
 # --------------------------------------------------------------------------- #
 # import the various client implementations
 # --------------------------------------------------------------------------- #
@@ -45,6 +48,21 @@ def readregs(address,count=1):
     else:
         return (holding_regs.registers)
 
+def u16_to_u32(regs):
+    u32 = None
+    if len(regs) >= 2:
+        u32 = (regs[1] + (regs[0] << 16))
+    return u32
+
+def u16_to_i32(regs):
+    i32 = None
+    if len(regs) >= 2:
+        i32 = (regs[1] + (regs[0] << 16))
+        if i32 & (1 << 31):
+            i32 = (1 << 32) - i32
+            i32 *= -1
+    return i32
+
 if __name__ == "__main__":
     # activate debugging
 #    pymodbus_apply_logging_config("DEBUG")
@@ -73,21 +91,29 @@ if __name__ == "__main__":
     regs = readregs(30025, 10)
     print("Part number:", regs2str (regs))
     
-    regs = readregs(30070, 2)
-    print("Model ID:", regs[0])
-    print("Number of PV strings:", regs[1])
-    
-    regs = readregs(32000, 1)
+    regs = readregs(32000, 5)
     print("State 1:", regs[0])
+    print("State 2:", regs[2])
+    print("State 3:", u16_to_u32(regs[3:]))
     
-    regs = readregs(32016, 4)
-    print("PV 1 voltage: %.1f V" % (regs[0] / 10.0))
-    print("PV 1 current: %.2f A" % (regs[1] / 100.0))
-    print("PV 2 voltage: %.1f V" % (regs[2] / 10.0))
-    print("PV 2 current: %.2f A" % (regs[3] / 100.0))
+    regs = readregs(32016, pv_string_num * 2)
+    for i in range(pv_string_num):
+        print("PV %i voltage: %.1f V" % (i, regs[i * 2] / 10.0))
+        print("PV %i current: %.2f A" % (i, regs[i * 2 + 1] / 100.0))
+    
+    regs = readregs(30070, 13)
+    print("Model ID:", regs[0])
+    pv_string_num = regs[1]
+    print("Number of PV strings:", regs[1])
+    print("Number of MPP trackers:", regs[2])
+    print("Rated power (Pn):", u16_to_u32(regs[3:]), "W")
+    print("Maximum active power (Pmax):", u16_to_u32(regs[5:]), "W")
+    print("Maximum apparent power (Smax):", u16_to_u32(regs[7:]), "VA")
+    print("Maximum reactive power to grid (Qmax):", u16_to_i32(regs[9:]), "var")
+    print("Maximum reactive power from grid (Qmax):", u16_to_i32(regs[11:]), "var")
     
     regs = readregs(32064, 2)
-    print("Input power: %.3f kW" % (regs[0] / 10.0))
+    print("Input power: %.3f kW" % (u16_to_i32(regs) / 10.0))
     
     regs = readregs(32066, 10)
     print("Power grid line AB voltage: %.3f V" % (regs[0] / 10.0))
@@ -97,8 +123,10 @@ if __name__ == "__main__":
     print("Power grid phase B voltage: %.3f V" % (regs[4] / 10.0))
     print("Power grid phase C voltage: %.3f V" % (regs[5] / 10.0))
     
-    regs = readregs(32078, 2)
-    print("Peak active power of current day: %.4f kW" % ((regs[1] + (regs[0] << 16)) / 1000.0))
+    regs = readregs(32078, 11)
+    print("Peak active power of current day: %.4f kW" % (u16_to_u32(regs) / 1000.0))
+    print("Active power: %.4f kW" % (u16_to_i32(regs[2:]) / 1000.0))
+    print("Reactive power: %.4f kvar" % (u16_to_i32(regs[4:]) / 1000.0))
 
     regs = readregs(32087, 1)
     print("Internal temperature: %.1f Celsius" % (regs[0] / 10.0))
