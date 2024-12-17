@@ -1,0 +1,11 @@
+# This affects access control for clients with no username.
+topic read $SYS/#
+
+# This only affects clients with username "demo".
+user demo
+topic readwrite json_exchange
+topic readwrite json
+topic read /sensors/#
+
+# This affects all clients.
+pattern write $SYS/broker/connection/%c/state
