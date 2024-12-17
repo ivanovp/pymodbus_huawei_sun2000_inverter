@@ -31,7 +31,7 @@ from paho.mqtt.enums import MQTTProtocolVersion
 import paho.mqtt.publish as publish
 
 modbus_slave_id = 1
-mqtt_host = "192.168.5.4"
+mqtt_host = "127.0.0.1"
 mqtt_port = 1883
 mqtt_topic = "/sensors/huawei_sun2000_inverter/"
 
