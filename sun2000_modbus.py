@@ -338,16 +338,24 @@ if __name__ == "__main__":
     client.close()
 
     quiet = False
-    publish = False
+    mqtt_publish = False
     if len(sys.argv) > 1:
         for arg in sys.argv[1:]:
             if arg == '-q':
                 quiet = True
-            if arg == '-m'
-                publish = True
+            elif arg == '-m':
+                mqtt_publish = True
+            elif arg == '-h':
+                print ("Usage: %s [-q] [-m] [-h]" % (sys.argv[0]))
+                print ("")
+                print ("Switches:")
+                print ("-q: Quiet mode")
+                print ("-m: Publish data via MQTT")
+                print ("-h: Print this help")
+                sys.exit(-1)
     if not quiet:
         print_data(d)
-    if publish:
+    if mqtt_publish:
         publish_data(d)
 
 
