@@ -19,6 +19,7 @@
 # --------------------------------------------------------------------------- #
 # import the various client implementations
 # --------------------------------------------------------------------------- #
+import sys
 import time
 import pymodbus.client as ModbusClient
 from pymodbus import (
@@ -27,7 +28,6 @@ from pymodbus import (
     ModbusException,
     pymodbus_apply_logging_config,
 )
-#import paho.mqtt.client as mqtt
 from paho.mqtt.enums import MQTTProtocolVersion
 import paho.mqtt.publish as publish
 
@@ -36,6 +36,7 @@ mqtt_host = "127.0.0.1"
 mqtt_port = 1883
 mqtt_topic = "/sensors/huawei_sun2000_inverter/"
 
+# Convert Modbus register to string
 def regs2str(regs):
     s = ""
     for r in regs:
@@ -48,6 +49,7 @@ def regs2str(regs):
         s += "%c%c" % (b, a)
     return s.rstrip()
 
+# Read registers from Modbus slave
 def readregs(client, address, count=1):
     try:
         holding_regs = client.read_holding_registers(address, count=count, slave=modbus_slave_id)
@@ -61,12 +63,14 @@ def readregs(client, address, count=1):
     else:
         return (holding_regs.registers)
 
+# Convert two unsigned 16-bit register to one unsigned 32-bit value
 def u16_to_u32(regs):
     u32 = None
     if len(regs) >= 2:
         u32 = (regs[1] + (regs[0] << 16))
     return u32
 
+# Convert two unsigned 16-bit register to one signed 32-bit value
 def u16_to_i32(regs):
     i32 = None
     if len(regs) >= 2:
@@ -76,6 +80,7 @@ def u16_to_i32(regs):
             i32 *= -1
     return i32
 
+# Get states, voltages, currents, etc. from Huawei SUN 2000 inverter via modbus
 def fetch_data():
     d = {}
 
@@ -264,6 +269,7 @@ def fetch_data():
 
     return d
 
+# Print states, voltages, currents, etc. of Huawei SUN 2000 inverter
 def print_data(d):
     print("Model:", d['model'])
     print("Model ID:", d['model_id'])
@@ -303,6 +309,7 @@ def print_data(d):
     print("Time zone: %i" % d['time_zone'])
     print("Time source: %i" % d['time_source'])
 
+# Publish states, voltages, currents, etc. of Huawei SUN 2000 inverter via MQTT
 def publish_data(d):
     msgs = []
     for k in d.keys():
@@ -316,26 +323,31 @@ if __name__ == "__main__":
 
     client = ModbusClient.ModbusSerialClient(
         port='/dev/serial/by-id/usb-1a86_USB2.0-Serial-if00-port0',
-#        framer=framer,
         timeout=1,
         retries=3,
         baudrate=9600,
         bytesize=8,
         parity="N",
         stopbits=1,
-        #handle_local_echo=False,
     )
 
-    #print ("connecting")
     client.connect()
 
     d = fetch_data()
 
-    #print ("close connection")
     client.close()
 
-    #print (d)
-    #print ("")
+    quiet = False
+    publish = False
+    if len(sys.argv) > 1:
+        for arg in sys.argv[1:]:
+            if arg == '-q':
+                quiet = True
+            if arg == '-m'
+                publish = True
+    if not quiet:
+        print_data(d)
+    if publish:
+        publish_data(d)
 
-    print_data(d)
-    publish_data(d)
+
