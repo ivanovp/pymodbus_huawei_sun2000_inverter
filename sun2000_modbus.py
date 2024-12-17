@@ -9,8 +9,9 @@
 # Creating venv:
 # python3 -m venv ~/pymodbus
 # cd ~/pymodbus/bin
-# ./pip3 install pymodbus
+# ./pip3 install -v "pymodbus==3.7.4"
 # ./pip3 install pyserial
+# ./pip3 install paho-mqtt
 #
 # Copyright (C) Peter Ivanov <ivanovp@gmail.com>, 2024
 # License: GPLv3
