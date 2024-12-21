@@ -34,7 +34,9 @@ import paho.mqtt.publish as publish
 modbus_slave_id = 1
 mqtt_host = "127.0.0.1"
 mqtt_port = 1883
-mqtt_topic = "/sensors/huawei_sun2000_inverter/"
+mqtt_topic = "/sensors/inverter/"
+# workaround for android application MQTT Dashboard, it does not handle underscore...
+enable_camel_case = False
 
 # Convert Modbus register to string
 def regs2str(regs):
@@ -168,7 +170,7 @@ def fetch_data():
         d['pv%i_current_A' % i] = regs[i * 2 + 1] / 100.0
 
     regs = readregs(client, 32064, 2)
-    d['input_power_kW'] = u16_to_i32(regs) / 10.0
+    d['input_power_kW'] = u16_to_i32(regs) / 1000.0
 
     regs = readregs(client, 32066, 10)
     d['line_AB_voltage_V'] = regs[0] / 10.0
@@ -313,7 +315,15 @@ def print_data(d):
 def publish_data(d):
     msgs = []
     for k in d.keys():
-        msg = { 'topic': mqtt_topic + k, 'payload': d[k]}
+        topic = k
+        if enable_camel_case:
+            while topic.find('_') != -1:
+                idx = topic.find('_')
+                print ("topic:", topic, "idx: ", idx);
+                topic = topic.replace('_', '', 1)
+                c = topic[idx]
+                topic = topic[:idx] + c.upper() + topic[idx + 1:]
+        msg = { 'topic': mqtt_topic + topic, 'payload': d[k]}
         msgs.append(msg)
     publish.multiple(msgs, hostname=mqtt_host, port=mqtt_port, protocol=MQTTProtocolVersion.MQTTv5)
 
