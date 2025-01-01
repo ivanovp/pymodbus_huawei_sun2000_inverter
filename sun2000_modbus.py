@@ -36,7 +36,7 @@ mqtt_host = "127.0.0.1"
 mqtt_port = 1883
 mqtt_topic = "/sensors/inverter/"
 # workaround for android application MQTT Dashboard, it does not handle underscore...
-enable_camel_case = False
+enable_camel_case = True
 
 # Convert Modbus register to string
 def regs2str(regs):
