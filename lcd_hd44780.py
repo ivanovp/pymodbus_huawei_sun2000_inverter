@@ -13,8 +13,8 @@ LCD_DATA7 = 24
 LCD_WIDTH = 20
 LCD_CHR = GPIO.HIGH
 LCD_CMD = GPIO.LOW
-E_PULSE = 40e-6 # 40 microseconds
-E_DELAY = 40e-6 # 40 microseconds
+E_PULSE = 50e-6 # 50 microseconds
+E_DELAY = 50e-6 # 50 microseconds
 
 BIT7 = 1 << 7
 BIT6 = 1 << 6
