@@ -30,6 +30,7 @@ from pymodbus import (
 )
 from paho.mqtt.enums import MQTTProtocolVersion
 import paho.mqtt.publish as publish
+import lcd_hd44780 as lcd
 
 modbus_slave_id = 1
 mqtt_host = "127.0.0.1"
@@ -311,6 +312,16 @@ def print_data(d):
     print("Time zone: %i" % d['time_zone'])
     print("Time source: %i" % d['time_source'])
 
+def lcd_print_data(d):
+    lcd.lcd_init()
+    lcd.lcd_print(0, d['state1_str'])
+#    for i in range(d['pv_string_num']):
+    i = 0
+    lcd.lcd_print(1, "PV%i: %.0fV %.2fA" % (i, d['pv%i_voltage_V' % i], d['pv%i_current_A' % i]))
+    lcd.lcd_print(2, "Pk pwr: %.4fkW" % d['peak_active_power_of_current_day_kW'])
+    lcd.lcd_print(3, "Act pwr: %.4fkW" % d['active_power_kW'])
+#    lcd.lcd_print(4, "Reactive power: %.4fkvar" % d['reactive_power_kvar'])
+
 # Publish states, voltages, currents, etc. of Huawei SUN 2000 inverter via MQTT
 def publish_data(d):
     msgs = []
@@ -349,23 +360,29 @@ if __name__ == "__main__":
 
     quiet = False
     mqtt_publish = False
+    lcd_print = False
     if len(sys.argv) > 1:
         for arg in sys.argv[1:]:
             if arg == '-q':
                 quiet = True
             elif arg == '-m':
                 mqtt_publish = True
+            elif arg == '-l':
+                lcd_print = True
             elif arg == '-h':
                 print ("Usage: %s [-q] [-m] [-h]" % (sys.argv[0]))
                 print ("")
                 print ("Switches:")
                 print ("-q: Quiet mode")
                 print ("-m: Publish data via MQTT")
+                print ("-l: Print data to HD44780 LCD")
                 print ("-h: Print this help")
                 sys.exit(-1)
     if not quiet:
         print_data(d)
     if mqtt_publish:
         publish_data(d)
+    if lcd_print:
+        lcd_print_data(d)
 
 
